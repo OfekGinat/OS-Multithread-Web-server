@@ -138,7 +138,7 @@ RequestInfo _drop_head_pop_front(); // ---> IMPLEMENT
 
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                                Utilities 
+            Wrappers for mutex and condition variable functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 // >>>>>>>>>> IMPORTANT: MAYBE ADD MACROS TO CLEAN THINGS UP -

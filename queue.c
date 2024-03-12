@@ -5,6 +5,8 @@
 // >>>>>>>>>> AND SET IT ACCORDING TO schedalg SIMILARLY TO p_push_back
 // >>>>>>>>>> (MIGHT NEED DIFFERENT KINDS OF _<schedalg>_pop_front()...)
 
+
+
 /* >>>>>>>>>> !!! IMPORTANT: DON'T FORGET TO ADD A RULE TO THE Makefile FOR THIS SOURCE CODE !!! */
 
 
@@ -112,13 +114,15 @@ RequestInfo (p_pop_front*) (void);
 // >>>>>>>>>> NOTE: HELPER FUNCTION, PROBABLY SHOULDN'T USE ANY LOCKS (ONLY INSERT AN ELEMENT) 
 void _enqueue(RequestInfo request_info);
 
-void _block_push_back(RequestInfo request_info); // ---> IMPLEMENT
+void _block_push_back(RequestInfo request_info); 
 
 void _drop_tail_push_back(RequestInfo request_info); // ---> IMPLEMENT
 
 void _drop_head_push_back(RequestInfo request_info); // ---> IMPLEMENT
 
-// >>>>>>>>>> TODO: ADD FOR BONUS SCHEDALGS  
+/*
+ ---> TODO: ADD FOR BONUS SCHEDALGS:
+*/  
 // void _block_flush_push_back(RequestInfo request_info);
 
 // void _drop_random_push_back(RequestInfo request_info);
@@ -129,15 +133,17 @@ void _drop_head_push_back(RequestInfo request_info); // ---> IMPLEMENT
 *    Remove the element at the front of the queue.
 **/
 // >>>>>>>>>> NOTE: HELPER FUNCTION, PROBABLY SHOULDN'T USE ANY LOCKS (ONLY REMOVE AN ELEMENT) 
-RequestInfo _dequeue(); // ---> IMPLEMENT
+RequestInfo _dequeue(); 
 
-RequestInfo _block_pop_front(); // ---> IMPLEMENT
+RequestInfo _block_pop_front(); 
 
 RequestInfo _drop_tail_pop_front(); // ---> IMPLEMENT
 
 RequestInfo _drop_head_pop_front(); // ---> IMPLEMENT
 
-// >>>>>>>>>> TODO: ADD FOR BONUS SCHEDALGS 
+/*
+ ---> TODO: ADD FOR BONUS SCHEDALGS:
+*/
 // RequestInfo _block_flush_pop_front();
 
 // RequestInfo _drop_random_pop_front();
@@ -160,12 +166,6 @@ RequestInfo _drop_head_pop_front(); // ---> IMPLEMENT
     }                                                               \
 } while (0)                                                         \
 
-#define cond_init(cond_addr) do {                                   \
-    int _error_code = pthread_cond_init((cond_addr), NULL);         \
-    if (_error_code != 0) {                                         \
-        posix_error(_error_code, "pthread_cond_init error");        \
-    }                                                               \
-} while (0)                                                         \
 
 #define mutex_lock(lock_addr) do {                                  \
     int _error_code = pthread_mutex_lock((lock_addr));              \
@@ -174,12 +174,22 @@ RequestInfo _drop_head_pop_front(); // ---> IMPLEMENT
     }                                                               \
 } while (0)                                                         \
 
+
 #define mutex_unlock(lock_addr) do {                                \
     int _error_code = pthread_mutex_unlock((lock_addr));            \
     if (_error_code != 0) {                                         \
         posix_error(_error_code, "pthread_mutex_unlock error");     \
     }                                                               \
 } while (0)                                                         \
+
+
+#define cond_init(cond_addr) do {                                   \
+    int _error_code = pthread_cond_init((cond_addr), NULL);         \
+    if (_error_code != 0) {                                         \
+        posix_error(_error_code, "pthread_cond_init error");        \
+    }                                                               \
+} while (0)                                                         \
+
 
 #define cond_wait(cond_addr, lock_addr) do {                        \
     int _error_code = pthread_cond_wait((cond_addr), (lock_addr));  \
@@ -188,12 +198,14 @@ RequestInfo _drop_head_pop_front(); // ---> IMPLEMENT
     }                                                               \
 } while (0)                                                         \
 
+
 #define cond_signal(cond_addr) do {                                 \
     int _error_code = pthread_cond_signal((cond_addr));             \
     if (_error_code != 0) {                                         \
         posix_error(_error_code, "pthread_cond_signal error");      \
     }                                                               \
 } while (0)                                                         \
+
 
 // >>>>>>>>>> OR:
 /*
@@ -253,14 +265,6 @@ void queue_init(int max_requests, char* schedalg)
 }
 
 
-void _enqueue(RequestInfo request_info)
-{
-    queue[p_write] = request_info;
-    p_write = (p_write + 1) % N;
-    queue_size++;
-}
-
-
 // >>>>>>>>>> OPTION: CHANGE TO void queue_push_back(RequestInfo request_info) 
 // >>>>>>>>>> AND LET THE SERVER CREATE THE NEW ELEMNT TO BE ADDED
 void queue_push_back(int connfd)
@@ -277,6 +281,14 @@ void queue_push_back(int connfd)
 }
 
 
+void _enqueue(RequestInfo request_info)
+{
+    queue[p_write] = request_info;
+    p_write = (p_write + 1) % N;
+    queue_size++;
+}
+
+
 void _block_push_back(RequestInfo request_info)
 {
     mutex_lock(&queue_lock_m);
@@ -287,5 +299,67 @@ void _block_push_back(RequestInfo request_info)
     _enqueue(request_info);
 
     cond_signal(&queue_remove_allowed_c);
+    mutex_unlock(&queue_lock_m);
+}
+
+
+/*
+ ---> TODO: ADD THE REST OF _<overload handling policy>_push_back() FUNCTIONS HERE
+*/
+
+
+RequestInfo queue_pop_front()
+{
+    return p_pop_front();
+}
+
+
+RequestInfo _dequeue()
+{
+    RequestInfo request_info = queue[p_read];
+    p_read = (p_read + 1) % N;
+    queue_size--;
+    return request_info;
+}
+
+
+RequestInfo _block_pop_front()
+{
+    mutex_lock(&queue_lock_m);
+    while (queue_size == 0) {
+        cond_wait(&queue_remove_allowed_c, &queue_lock_m);
+    }
+
+    RequestInfo request_info = _dequeue();
+    
+    mutex_unlock(&queue_lock_m);
+    return request_info;
+}
+
+
+/*
+ ---> TODO: ADD THE REST OF _<overload handling policy>_pop_front() FUNCTIONS HERE
+*/
+
+
+/*
+     >!>!>!>!>!>!>!>!>!> VERY IMPORTANT: <!<!<!<!<!<!<!<!<!< 
+        MAYBE WE NEED A FEW VERSIONS OF THIS,
+        WITH SOMETHING LIKE A void (p_dec_num_requests*) (void)
+        AND MATCHING _<overload handling policy>_dec_num_requests()
+        ( IF SO, PROBABLY NEED TO CHANGE THIS FUNCTION TO -
+            void queue_dec_num_requests()
+            {
+                p_dec_num_requests();
+            }
+        OR SOMETHING LIKE THIS ).
+*/
+void queue_dec_num_requests()
+{
+    mutex_lock(&queue_lock_m);
+
+    num_requests_in_handling--;
+    cond_signal(&queue_insert_allowed_c); // >>>>>>>>>> MIGHT BE SPECIFIC FOR schedalg == "block"
+
     mutex_unlock(&queue_lock_m);
 }

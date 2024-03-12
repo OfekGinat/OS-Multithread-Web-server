@@ -37,14 +37,14 @@ void queue_push_back(int connfd);
 *   Remove the oldest request in the queue and
 *   mark it as being handled.
 **/
-RequestInfo queue_pop_front(); // ---> IMPLEMENT
+RequestInfo queue_pop_front(); 
 
 /**
 *    When done handling a request, a worker thread
 *    should call this function to decrease the number
 *    of requests currently being handled.
 **/
-void queue_dec_num_requests(); // ---> IMPLEMENT
+void queue_dec_num_requests(); // ---> IMPLEMENT (?)
 
 
 #endif

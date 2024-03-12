@@ -1,6 +1,217 @@
 #include "queue.h"
 
+
+// >>>>>>>>>> MIGHT NEED TO ADD RequestInfo (p_pop_front*) (void) 
+// >>>>>>>>>> AND SET IT ACCORDING TO schedalg SIMILARLY TO p_push_back
+// >>>>>>>>>> (MIGHT NEED DIFFERENT KINDS OF _<schedalg>_pop_front()...)
+
 /* >>>>>>>>>> !!! IMPORTANT: DON'T FORGET TO ADD A RULE TO THE Makefile FOR THIS SOURCE CODE !!! */
+
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                             Queue variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+// >>>>>>>>>> SHOULD ALL/ANY OF THESE VARS BE static?
+
+/** 
+*    queue -
+*        The requests queue, implemented as a ring buffer.
+**/
+RequestInfo* queue;
+
+/** 
+*    queue_insert_allowed_c -
+*        Condition variable for inserting into the queue.
+*        Must be initialized! 
+**/
+cond_t queue_insert_allowed_c; 
+
+/** 
+*    queue_remove_allowed_c -
+*        Condition variable for removing from the queue.
+*        Must be initialized! 
+**/
+cond_t queue_remove_allowed_c; 
+
+/** 
+*    queue_lock_m -
+*        Lock for accessing the queue.
+*        Must be initialized! 
+**/
+mutex_t queue_lock_m;
+
+/** 
+*    p_read -
+*        Ring buffer index for next read.
+**/
+int p_read;
+
+/** 
+*    p_write -
+*        Ring buffer index for next write.
+**/
+int p_write;
+
+/** 
+*    MAX_REQUESTS_NUM -
+*        Maximum number of requests that the system
+*        can handle at any given moment.
+**/
+int MAX_REQUESTS_NUM; // is constant
+
+/** 
+*    N -
+*        Ring buffer's total size (equals MAX_REQUESTS_NUM + 1).
+**/
+int N; // is constant
+
+/** 
+*   queue_size -
+*        Number of requests waiting to be handled.
+**/
+int queue_size;
+
+/** 
+*    num_requests_in_handling -
+*       Number of requests currently being handled
+*       by thr worker threads.
+**/
+int num_requests_in_handling;
+
+/**
+*     p_push_back - 
+*        Is used in queue_push_back().
+*        Will be set according to overload handling policy
+*        to one of { _block_push_back(), _drop_tail_push_back(),
+*                    _drop_head_push_back(), ... }
+**/
+void (p_push_back*) (RequestInfo);
+
+// >>>>>>>>>> IMPORTANT: MAKE SURE p_pop_front IS NEEDED AND SHOULD ACT SIMILARLY TO p_push_back 
+/**
+*     p_pop_front - 
+*        Is used in queue_pop_front().
+*        Will be set according to overload handling policy
+*        to one of { _block_pop_front(), _drop_tail_pop_front(),
+*                    _drop_head_pop_front(), ... }
+**/
+RequestInfo (p_pop_front*) (void);
+
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            Queue helper functions 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+/********************* Insertion: *********************/
+/** 
+*    Insert an element at the back of the queue.
+**/ 
+// >>>>>>>>>> NOTE: HELPER FUNCTION, PROBABLY SHOULDN'T USE ANY LOCKS (ONLY INSERT AN ELEMENT) 
+void _enqueue(RequestInfo request_info);
+
+void _block_push_back(RequestInfo request_info); // ---> IMPLEMENT
+
+void _drop_tail_push_back(RequestInfo request_info); // ---> IMPLEMENT
+
+void _drop_head_push_back(RequestInfo request_info); // ---> IMPLEMENT
+
+// >>>>>>>>>> TODO: ADD FOR BONUS SCHEDALGS  
+// void _block_flush_push_back(RequestInfo request_info);
+
+// void _drop_random_push_back(RequestInfo request_info);
+
+
+/********************* Removal: *********************/
+/** 
+*    Remove the element at the front of the queue.
+**/
+// >>>>>>>>>> NOTE: HELPER FUNCTION, PROBABLY SHOULDN'T USE ANY LOCKS (ONLY REMOVE AN ELEMENT) 
+RequestInfo _dequeue(); // ---> IMPLEMENT
+
+RequestInfo _block_pop_front(); // ---> IMPLEMENT
+
+RequestInfo _drop_tail_pop_front(); // ---> IMPLEMENT
+
+RequestInfo _drop_head_pop_front(); // ---> IMPLEMENT
+
+// >>>>>>>>>> TODO: ADD FOR BONUS SCHEDALGS 
+// RequestInfo _block_flush_pop_front();
+
+// RequestInfo _drop_random_pop_front();
+
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                Utilities 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+// >>>>>>>>>> IMPORTANT: MAYBE ADD MACROS TO CLEAN THINGS UP -
+/* >>>>>>>>>> NOTE: MY REASONING FOR USING MACROS AND NOT FUNCTIONS IS TO PREVENT 
+   >>>>>>>>>> WEIRD LOCK RELATED BUGS, BUT I'M NOT SURE THIS IS ACTUALLY BETTER, 
+   >>>>>>>>>> LET'S FIND OUT AND SEE */
+
+#define mutex_init(lock_addr) do {                                  \
+    int _error_code = pthread_mutex_init((lock_addr), NULL);        \
+    if (_error_code != 0) {                                         \
+        posix_error(_error_code, "pthread_mutex_init error");       \
+    }                                                               \
+} while (0)                                                         \
+
+#define cond_init(cond_addr) do {                                   \
+    int _error_code = pthread_cond_init((cond_addr), NULL);         \
+    if (_error_code != 0) {                                         \
+        posix_error(_error_code, "pthread_cond_init error");        \
+    }                                                               \
+} while (0)                                                         \
+
+#define mutex_lock(lock_addr) do {                                  \
+    int _error_code = pthread_mutex_lock((lock_addr));              \
+    if (_error_code != 0) {                                         \
+        posix_error(_error_code, "pthread_mutex_lock error");       \
+    }                                                               \
+} while (0)                                                         \
+
+#define mutex_unlock(lock_addr) do {                                \
+    int _error_code = pthread_mutex_unlock((lock_addr));            \
+    if (_error_code != 0) {                                         \
+        posix_error(_error_code, "pthread_mutex_unlock error");     \
+    }                                                               \
+} while (0)                                                         \
+
+#define cond_wait(cond_addr, lock_addr) do {                        \
+    int _error_code = pthread_cond_wait((cond_addr), (lock_addr));  \
+    if (_error_code != 0) {                                         \
+        posix_error(_error_code, "pthread_cond_wait error");        \
+    }                                                               \
+} while (0)                                                         \
+
+#define cond_signal(cond_addr) do {                                 \
+    int _error_code = pthread_cond_signal((cond_addr));             \
+    if (_error_code != 0) {                                         \
+        posix_error(_error_code, "pthread_cond_signal error");      \
+    }                                                               \
+} while (0)                                                         \
+
+// >>>>>>>>>> OR:
+/*
+    #define _pthread_do(pthread_function_name,  pthread_function_call) do {     \
+        int _error_code = (pthread_function_call);                              \
+        if (_error_code != 0) {                                                 \
+            posix_error(_error_code, "pthread_function_name");                  \
+        }                                                                       \
+    } while (0)                                                                 \
+*/ 
+// >>>>>>>>>> FOR EXAMPLE - _pthread_do(pthread_cond_wait, pthread_cond_wait(&queue_insert_allowed_c, &queue_lock_m));
+// >>>>>>>>>> VERY UGLY...
+
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                        Queue function implementations 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 void queue_init(int max_requests, char* schedalg)
 {
@@ -10,7 +221,11 @@ void queue_init(int max_requests, char* schedalg)
     p_write = 0;
     queue_size = 0;
     num_requests_in_handling = 0;
-    queue = (RequestInfo*)malloc(N * sizeof(RequestInfo)); // ASSUME SUCCESS?
+    errno = 0; // needed for unix_error().
+    queue = (RequestInfo*)malloc(N * sizeof(RequestInfo)); 
+    if (queue == NULL) {
+        unix_error("malloc error");
+    }
 
     // >>>>>>>>>> !!! MAYBE NEED TO MOVE THIS INSIDE "if (strcmp(schedalg, "block") == 0)" !!!
     // >>>>>>>>>> (IF NOT ALL THREE, MAYBE ONE OR TWO OF THE initS, OR
@@ -69,7 +284,7 @@ void _block_push_back(RequestInfo request_info)
         cond_wait(&queue_insert_allowed_c, &queue_lock_m);
     } // >>>>>>>>>> DO assert( (queue_size + num_requests_in_handling) < MAX_REQUESTS_NUM ) AFTER while?
 
-   _enqueue(request_info);
+    _enqueue(request_info);
 
     cond_signal(&queue_remove_allowed_c);
     mutex_unlock(&queue_lock_m);

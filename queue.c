@@ -23,21 +23,21 @@ RequestInfo* queue;
 *        Condition variable for inserting into the queue.
 *        Must be initialized! 
 **/
-cond_t queue_insert_allowed_c; 
+pthread_cond_t queue_insert_allowed_c; 
 
 /** 
 *    queue_remove_allowed_c -
 *        Condition variable for removing from the queue.
 *        Must be initialized! 
 **/
-cond_t queue_remove_allowed_c; 
+pthread_cond_t queue_remove_allowed_c; 
 
 /** 
 *    queue_lock_m -
 *        Lock for accessing the queue.
 *        Must be initialized! 
 **/
-mutex_t queue_lock_m;
+pthread_mutex_t queue_lock_m;
 
 /** 
 *    p_read -

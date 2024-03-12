@@ -1,13 +1,8 @@
 #include "queue.h"
 
 
-// >>>>>>>>>> MIGHT NEED TO ADD RequestInfo (p_pop_front*) (void) 
-// >>>>>>>>>> AND SET IT ACCORDING TO schedalg SIMILARLY TO p_push_back
-// >>>>>>>>>> (MIGHT NEED DIFFERENT KINDS OF _<schedalg>_pop_front()...)
 
-
-
-/* >>>>>>>>>> !!! IMPORTANT: DON'T FORGET TO ADD A RULE TO THE Makefile FOR THIS SOURCE CODE !!! */
+/* >!>!>!>!>!>!>!>!>!> !!! IMPORTANT: DON'T FORGET TO ADD A RULE TO THE Makefile FOR THIS SOURCE CODE !!! <!<!<!<!<!<!<!<!<!< */
 
 
 
@@ -91,7 +86,6 @@ int num_requests_in_handling;
 **/
 void (p_push_back*) (RequestInfo);
 
-// >>>>>>>>>> IMPORTANT: MAKE SURE p_pop_front IS NEEDED AND SHOULD ACT SIMILARLY TO p_push_back 
 /**
 *     p_pop_front - 
 *        Is used in queue_pop_front().
@@ -99,7 +93,7 @@ void (p_push_back*) (RequestInfo);
 *        to one of { _block_pop_front(), _drop_tail_pop_front(),
 *                    _drop_head_pop_front(), ... }
 **/
-RequestInfo (p_pop_front*) (void);
+RequestInfo (p_pop_front*) (void); // >>>>>>>>>> IMPORTANT: MAKE SURE p_pop_front IS NEEDED AND SHOULD ACT SIMILARLY TO p_push_back 
 
 
 
@@ -120,13 +114,9 @@ void _drop_tail_push_back(RequestInfo request_info); // ---> IMPLEMENT
 
 void _drop_head_push_back(RequestInfo request_info); // ---> IMPLEMENT
 
-/*
- ---> TODO: ADD FOR BONUS SCHEDALGS:
-*/  
-// void _block_flush_push_back(RequestInfo request_info);
+// void _block_flush_push_back(RequestInfo request_info); // ---> TODO: ADD FOR BONUS SCHEDALGS
 
-// void _drop_random_push_back(RequestInfo request_info);
-
+// void _drop_random_push_back(RequestInfo request_info); // ---> TODO: ADD FOR BONUS SCHEDALGS
 
 /********************* Removal: *********************/
 /** 
@@ -141,12 +131,9 @@ RequestInfo _drop_tail_pop_front(); // ---> IMPLEMENT
 
 RequestInfo _drop_head_pop_front(); // ---> IMPLEMENT
 
-/*
- ---> TODO: ADD FOR BONUS SCHEDALGS:
-*/
-// RequestInfo _block_flush_pop_front();
+// RequestInfo _block_flush_pop_front(); // ---> TODO: ADD FOR BONUS SCHEDALGS
 
-// RequestInfo _drop_random_pop_front();
+// RequestInfo _drop_random_pop_front(); // ---> TODO: ADD FOR BONUS SCHEDALGS
 
 
 
@@ -304,7 +291,9 @@ void _block_push_back(RequestInfo request_info)
 
 
 /*
+ ---> ****************************************************************************
  ---> TODO: ADD THE REST OF _<overload handling policy>_push_back() FUNCTIONS HERE
+ ---> ****************************************************************************
 */
 
 
@@ -338,7 +327,9 @@ RequestInfo _block_pop_front()
 
 
 /*
+ ---> ****************************************************************************
  ---> TODO: ADD THE REST OF _<overload handling policy>_pop_front() FUNCTIONS HERE
+ ---> ****************************************************************************
 */
 
 

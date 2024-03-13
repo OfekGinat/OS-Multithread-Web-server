@@ -322,6 +322,10 @@ RequestInfo _block_pop_front()
     RequestInfo request_info = _dequeue();
     num_requests_in_handling++; // >>>>>>>>>> FORGOT THIS! OH MY
 
+    // >@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@> FOR TESTING ONLY:    
+    //printf("%d\n", request_info.connfd);
+    // >@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@> FOR TESTING ONLY.   
+
     mutex_unlock(&queue_lock_m);
     return request_info;
 }

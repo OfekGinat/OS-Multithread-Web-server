@@ -84,7 +84,7 @@ int num_requests_in_handling;
 *        to one of { _block_push_back(), _drop_tail_push_back(),
 *                    _drop_head_push_back(), ... }
 **/
-void (p_push_back*) (RequestInfo);
+void (*p_push_back)(RequestInfo);
 
 /**
 *     p_pop_front - 
@@ -93,7 +93,7 @@ void (p_push_back*) (RequestInfo);
 *        to one of { _block_pop_front(), _drop_tail_pop_front(),
 *                    _drop_head_pop_front(), ... }
 **/
-RequestInfo (p_pop_front*) (void); // >>>>>>>>>> IMPORTANT: MAKE SURE p_pop_front IS NEEDED AND SHOULD ACT SIMILARLY TO p_push_back 
+RequestInfo (*p_pop_front)(void); // >>>>>>>>>> IMPORTANT: MAKE SURE p_pop_front IS NEEDED AND SHOULD ACT SIMILARLY TO p_push_back 
 
 
 
@@ -237,11 +237,11 @@ void queue_init(int max_requests, char* schedalg)
         p_push_back = _block_push_back;
         p_pop_front = _block_pop_front;
     } else if (strcmp(schedalg, "dt") == 0) {
-        p_push_back = _drop_tail_push_back;
-        p_pop_front = _drop_tail_pop_front;
+        //p_push_back = _drop_tail_push_back; // >!>!>!>!>!>!>!>!>!> PUT IN COMMENT FOR TESTING (LINKER ERROR CAUSE NO IMPLEMENTATION EXISTS YET)
+        //p_pop_front = _drop_tail_pop_front; // >!>!>!>!>!>!>!>!>!> PUT IN COMMENT FOR TESTING (LINKER ERROR CAUSE NO IMPLEMENTATION EXISTS YET)
     } else if (strcmp(schedalg, "dh") == 0) {
-        p_push_back = _drop_head_push_back;
-        p_pop_front = _drop_head_pop_front;
+        //p_push_back = _drop_head_push_back; // >!>!>!>!>!>!>!>!>!> PUT IN COMMENT FOR TESTING (LINKER ERROR CAUSE NO IMPLEMENTATION EXISTS YET)
+        //p_pop_front = _drop_head_pop_front; // >!>!>!>!>!>!>!>!>!> PUT IN COMMENT FOR TESTING (LINKER ERROR CAUSE NO IMPLEMENTATION EXISTS YET)
     } /*else if (strcmp(schedalg, "bf") == 0) {
         p_push_back = _block_flush_push_back;
         p_pop_front = _block_flush_pop_front;
@@ -320,7 +320,8 @@ RequestInfo _block_pop_front()
     }
 
     RequestInfo request_info = _dequeue();
-    
+    num_requests_in_handling++; // >>>>>>>>>> FORGOT THIS! OH MY
+
     mutex_unlock(&queue_lock_m);
     return request_info;
 }

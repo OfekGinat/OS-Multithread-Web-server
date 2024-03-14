@@ -5,9 +5,6 @@
 
 #define SCHEDALG_STR_MAX_LEN 10 // <@<@<@<@ is actually 6 + 1 = 7 for "random"
 
-// *****************************************************************************************************
-// >!>!>!>!>!>!>!>!>!> SEEMS TO WORK OK, CHECK THE DELAY CAUSED BY FIRST ELEMENT IS A SERIES OF REQUESTS
-// *****************************************************************************************************
 
 // 
 // server.c: A very, very simple web server
@@ -67,6 +64,7 @@ int main(int argc, char *argv[])
     int listenfd, connfd, port, clientlen, num_threads, queue_size; // <@<@<@<@ added "num_threads, queue_size"
     char schedalg[SCHEDALG_STR_MAX_LEN]; // <@<@<@<@ added schedalg
     struct sockaddr_in clientaddr;
+    RequestInfo request_info; // <@<@<@<@ added request_info
 
     getargs(&port, &num_threads, &queue_size, schedalg, argc, argv); // <@<@<@<@ added "&num_threads, &queue_size, schedalg,"
 
@@ -99,7 +97,13 @@ int main(int argc, char *argv[])
 	// Save the relevant info in a buffer and have one of the worker threads 
 	// do the work. 
 	// 
-        queue_push_back(connfd); // <@<@<@<@ added this
+        /*@>@>@>@>~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+        request_info.connfd = connfd; // <!<!<!<!<!<! NOTE: DON'T FORGET TO SET *ALL* OF request_info'S FIELDS EVERY ITERATION!
+        /* 
+            more info like arrival_time (check gettimeofday() for failure!)... 
+        */ 
+        queue_push_back(request_info);
+        /*<@<@<@<@~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	    //requestHandle(connfd); // <@<@<@<@ put in comment
 	    //Close(connfd); // <@<@<@<@ put in comment

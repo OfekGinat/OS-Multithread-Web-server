@@ -31,7 +31,7 @@ void queue_init(int max_requests, char* schedalg);
 /**
 *   Insert a new request at the back of the queue.
 **/
-void queue_push_back(int connfd);
+void queue_push_back(RequestInfo request_info);
 
 /**
 *   Remove the oldest request in the queue and
@@ -44,7 +44,7 @@ RequestInfo queue_pop_front();
 *    should call this function to decrease the number
 *    of requests currently being handled.
 **/
-void queue_dec_num_requests(); // ---> IMPLEMENT (?)
+void queue_dec_num_requests();
 
 
 #endif

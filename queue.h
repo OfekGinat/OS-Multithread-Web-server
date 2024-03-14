@@ -23,8 +23,8 @@ typedef struct {
 /**
 *   Initialize the queue with desired maximum number
 *   of simultanious requests and overload handling policy.
-*   Call only after checking that all command line 
-*   arguments are valid!
+*   max_requests must be a positive integer, and schedalg
+*   must be one of "block", "dt" or "dh".
 **/
 void queue_init(int max_requests, char* schedalg);
 

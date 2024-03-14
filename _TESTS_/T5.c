@@ -26,11 +26,13 @@ int main(int argc, char** argv) {
     for (int i = 0; i < NUM_THREADS; ++i)
         pthread_create(&bitches[i], NULL, thread_routine, NULL);
 
-    for (int i = 1; i < argc; ++i)
-        queue_push_back(atoi(argv[i]));
 
-    int press_ctrl_plus_d_to_exit;
-    while (scanf("%d", &press_ctrl_plus_d_to_exit) != EOF);
+    int val;
+
+    // PRESS CTRL+D TO TERMINATE
+    while (scanf("%d", &val) != EOF) { 
+        queue_push_back(val);
+    }
        
     return 0;
 }

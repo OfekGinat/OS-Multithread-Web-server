@@ -1,3 +1,4 @@
+#include "segel.h"
 #include "queue.h"
 
 
@@ -245,10 +246,13 @@ void queue_init(int max_requests, char* schedalg)
     } /*else if (strcmp(schedalg, "bf") == 0) {
         p_push_back = _block_flush_push_back;
         p_pop_front = _block_flush_pop_front;
-    } else { // schedalg == "random"
+    } else if (strcmp(schedalg, "random") == 0) { 
         p_push_back = _drop_random_push_back;
         p_pop_front = _drop_random_pop_front;
-    }*/
+    }*/ else {
+        fprintf(stderr, "Invalid overload handling");
+	    exit(1);
+    }
 }
 
 
@@ -323,7 +327,7 @@ RequestInfo _block_pop_front()
     num_requests_in_handling++; // >>>>>>>>>> FORGOT THIS! OH MY
 
     // >@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@> FOR TESTING ONLY:    
-    //printf("%d\n", request_info.connfd);
+    //printf(">>>>> %d\n", request_info.connfd);
     // >@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@> FOR TESTING ONLY.   
 
     mutex_unlock(&queue_lock_m);

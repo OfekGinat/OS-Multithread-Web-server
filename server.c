@@ -46,15 +46,14 @@ void* thread_handle_request(void* arg) // <@<@<@<@ change "arg" according to act
 {
     while (1) {
         RequestInfo request_info = queue_pop_front();
-
         requestHandle(request_info.connfd);
-
         queue_dec_num_requests();
-
 	    Close(request_info.connfd); 
 
         //queue_dec_num_requests();
     }
+
+    return NULL; // <@<@<@<@ added this
 }
 /*<@<@<@<@~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -108,6 +107,8 @@ int main(int argc, char *argv[])
 	    //requestHandle(connfd); // <@<@<@<@ put in comment
 	    //Close(connfd); // <@<@<@<@ put in comment
     }
+    
+    return 0; // <@<@<@<@ added this
 }
 
 

@@ -119,9 +119,9 @@ void _enqueue(RequestInfo request_info);
 
 void _block_push_back(RequestInfo request_info); 
 
-void _drop_tail_push_back(RequestInfo request_info); // ---> IMPLEMENT
+void _drop_tail_push_back(RequestInfo request_info); 
 
-void _drop_head_push_back(RequestInfo request_info); // ---> IMPLEMENT
+void _drop_head_push_back(RequestInfo request_info);
 
 // void _block_flush_push_back(RequestInfo request_info); // ---> TODO: ADD FOR BONUS SCHEDALGS
 
@@ -134,11 +134,7 @@ void _drop_head_push_back(RequestInfo request_info); // ---> IMPLEMENT
 **/
 RequestInfo _dequeue(); 
 
-RequestInfo _block_pop_front(); 
-
-RequestInfo _drop_tail_pop_front(); // ---> IMPLEMENT
-
-RequestInfo _drop_head_pop_front(); // ---> IMPLEMENT
+RequestInfo _pop_front(); 
 
 // RequestInfo _block_flush_pop_front(); // ---> TODO: ADD FOR BONUS SCHEDALGS
 
@@ -148,9 +144,7 @@ RequestInfo _drop_head_pop_front(); // ---> IMPLEMENT
 /****************** Monitoring number of requests: ******************/
 void _block_dec_num_requests();
 
-void _drop_tail_dec_num_requests(); // ---> IMPLEMENT
-
-void _drop_head_dec_num_requests(); // ---> IMPLEMENT
+void _drop_all_dec_num_requests();
 
 // void _block_flush_dec_num_requests(); // ---> TODO: ADD FOR BONUS SCHEDALGS
 
@@ -232,23 +226,22 @@ void queue_init(int max_requests, char* schedalg)
     /* 
        >>>>>>>>> MAKE SURE TO PUT HERE initS WE NEED FOR ALL CASES
     */
-    //cond_init(&queue_insert_allowed_c); // <@<@<@<@<@<@<@<@<@<@<@<@ PUT IN COMMENT
     cond_init(&queue_remove_allowed_c);
     mutex_init(&queue_lock_m);
 
     if (strcmp(schedalg, "block") == 0) {
         p_push_back = _block_push_back;
-        p_pop_front = _block_pop_front;
+        p_pop_front = _pop_front;
         p_dec_num_requests = _block_dec_num_requests;
-        cond_init(&queue_insert_allowed_c); // <@<@<@<@<@<@<@<@<@<@<@<@ MOVED IT HERE
+        cond_init(&queue_insert_allowed_c);
     } else if (strcmp(schedalg, "dt") == 0) {
-        //p_push_back = _drop_tail_push_back; // >!>!>!> PUT IN COMMENT FOR TESTING (LINKER ERROR CAUSE NO IMPLEMENTATION EXISTS YET)
-        //p_pop_front = _drop_tail_pop_front; // >!>!>!> PUT IN COMMENT FOR TESTING (LINKER ERROR CAUSE NO IMPLEMENTATION EXISTS YET)
-        //p_dec_num_requests = _drop_tail_dec_num_requests;
+        p_push_back = _drop_tail_push_back;
+        p_pop_front = _pop_front;
+        p_dec_num_requests = _drop_all_dec_num_requests;
     } else if (strcmp(schedalg, "dh") == 0) {
-        //p_push_back = _drop_head_push_back; // >!>!>!> PUT IN COMMENT FOR TESTING (LINKER ERROR CAUSE NO IMPLEMENTATION EXISTS YET)
-        //p_pop_front = _drop_head_pop_front; // >!>!>!> PUT IN COMMENT FOR TESTING (LINKER ERROR CAUSE NO IMPLEMENTATION EXISTS YET)
-        //p_dec_num_requests = _drop_head_dec_num_requests;
+        p_push_back = _drop_head_push_back;
+        p_pop_front = _pop_front;
+        p_dec_num_requests = _drop_all_dec_num_requests;
     } /*else if (strcmp(schedalg, "bf") == 0) {
         p_push_back = _block_flush_push_back;
         p_pop_front = _block_flush_pop_front;
@@ -314,25 +307,6 @@ void _block_push_back(RequestInfo request_info)
 }
 
 
-RequestInfo _block_pop_front()
-{
-    mutex_lock(&queue_lock_m);
-    while (queue_size == 0) {
-        cond_wait(&queue_remove_allowed_c, &queue_lock_m);
-    }
-
-    RequestInfo request_info = _dequeue();
-    num_requests_in_handling++; 
-
-    // >@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@> FOR TESTING ONLY:    
-    //printf(">>>>> %d\n", request_info.connfd);
-    // >@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@>@> FOR TESTING ONLY.   
-
-    mutex_unlock(&queue_lock_m);
-    return request_info;
-}
-
-
 void _block_dec_num_requests()
 {
     mutex_lock(&queue_lock_m);
@@ -343,3 +317,55 @@ void _block_dec_num_requests()
     mutex_unlock(&queue_lock_m);
 }
 /*~~~~~~~~~~~~~~~~~~~~~ "block" functions end. ~~~~~~~~~~~~~~~~~~~~~*/
+
+
+/*~~~~~~~~~~~~~~~~~~~~ "drop_tail" functions start: ~~~~~~~~~~~~~~~~~~~~*/
+void _drop_tail_push_back(RequestInfo request_info)
+{
+    mutex_lock(&queue_lock_m);
+    if ((queue_size + num_requests_in_handling) == MAX_REQUESTS_NUM) {
+        Close(request_info.connfd);
+    }
+    else {
+        _enqueue(request_info);
+        cond_signal(&queue_remove_allowed_c);
+    }
+    mutex_unlock(&queue_lock_m);
+}
+
+
+/*~~~~~~~~~~~~~~~~~~~~~ "drop_tail" functions end. ~~~~~~~~~~~~~~~~~~~~~*/
+
+/*~~~~~~~~~~~~~~~~~~~~ "drop_head" functions start: ~~~~~~~~~~~~~~~~~~~~*/
+void _drop_head_push_back(RequestInfo request_info)
+{
+    mutex_lock(&queue_lock_m);
+    if ((queue_size + num_requests_in_handling) == MAX_REQUESTS_NUM) {
+        _dequeue();
+    }
+    _enqueue(request_info);
+    cond_signal(&queue_remove_allowed_c);
+    mutex_unlock(&queue_lock_m);
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~ "drop_head" functions end. ~~~~~~~~~~~~~~~~~~~~~*/
+RequestInfo _pop_front()
+{
+    mutex_lock(&queue_lock_m);
+    while (queue_size == 0) {
+        cond_wait(&queue_remove_allowed_c, &queue_lock_m);
+    }
+    RequestInfo request_info = _dequeue();
+    num_requests_in_handling++; 
+
+    mutex_unlock(&queue_lock_m);
+    return request_info;
+}
+
+
+void _drop_all_dec_num_requests()
+{
+    mutex_lock(&queue_lock_m);
+    num_requests_in_handling--;
+    mutex_unlock(&queue_lock_m);
+}

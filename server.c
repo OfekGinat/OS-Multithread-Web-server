@@ -49,8 +49,6 @@ void* thread_handle_request(void* arg) // <@<@<@<@ change "arg" according to act
         requestHandle(request_info.connfd);
         queue_dec_num_requests();
 	    Close(request_info.connfd); 
-
-        //queue_dec_num_requests();
     }
 
     return NULL; // <@<@<@<@ added this

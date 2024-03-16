@@ -292,6 +292,28 @@ RequestInfo _dequeue()
 }
 
 
+RequestInfo _pop_front()
+{
+    mutex_lock(&queue_lock_m);
+    while (queue_size == 0) {
+        cond_wait(&queue_remove_allowed_c, &queue_lock_m);
+    }
+    RequestInfo request_info = _dequeue();
+    num_requests_in_handling++; 
+
+    mutex_unlock(&queue_lock_m);
+    return request_info;
+}
+
+
+void _drop_all_dec_num_requests()
+{
+    mutex_lock(&queue_lock_m);
+    num_requests_in_handling--;
+    mutex_unlock(&queue_lock_m);
+}
+
+
 /*~~~~~~~~~~~~~~~~~~~~ "block" functions start: ~~~~~~~~~~~~~~~~~~~~*/
 void _block_push_back(RequestInfo request_info)
 {
@@ -332,40 +354,24 @@ void _drop_tail_push_back(RequestInfo request_info)
     }
     mutex_unlock(&queue_lock_m);
 }
-
-
 /*~~~~~~~~~~~~~~~~~~~~~ "drop_tail" functions end. ~~~~~~~~~~~~~~~~~~~~~*/
+
 
 /*~~~~~~~~~~~~~~~~~~~~ "drop_head" functions start: ~~~~~~~~~~~~~~~~~~~~*/
 void _drop_head_push_back(RequestInfo request_info)
 {
     mutex_lock(&queue_lock_m);
-    if ((queue_size + num_requests_in_handling) == MAX_REQUESTS_NUM) {
-        _dequeue();
+    if (((queue_size + num_requests_in_handling) == MAX_REQUESTS_NUM)) {
+        if (queue_size == 0) {
+            Close(request_info.connfd);
+            mutex_unlock(&queue_lock_m);
+            return;
+        }
+        RequestInfo temp_request = _dequeue();
+        Close(temp_request.connfd);
     }
     _enqueue(request_info);
     cond_signal(&queue_remove_allowed_c);
     mutex_unlock(&queue_lock_m);
 }
-
 /*~~~~~~~~~~~~~~~~~~~~~ "drop_head" functions end. ~~~~~~~~~~~~~~~~~~~~~*/
-RequestInfo _pop_front()
-{
-    mutex_lock(&queue_lock_m);
-    while (queue_size == 0) {
-        cond_wait(&queue_remove_allowed_c, &queue_lock_m);
-    }
-    RequestInfo request_info = _dequeue();
-    num_requests_in_handling++; 
-
-    mutex_unlock(&queue_lock_m);
-    return request_info;
-}
-
-
-void _drop_all_dec_num_requests()
-{
-    mutex_lock(&queue_lock_m);
-    num_requests_in_handling--;
-    mutex_unlock(&queue_lock_m);
-}

@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
             exit(0);
         }
         request_info.arrival_time = request_arrival_time;
-        request_info.connfd = connfd; // <!<!<!<!<!<! NOTE: DON'T FORGET TO SET *ALL* OF request_info'S FIELDS EVERY ITERATION!
+        request_info.connfd = connfd; 
         queue_push_back(request_info);
         /*<@<@<@<@<@~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<@<@<@<@<@*/
 	    //requestHandle(connfd); // <@<@<@<@ put in comment

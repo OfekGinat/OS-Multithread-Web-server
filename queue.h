@@ -11,8 +11,7 @@
 **/
 typedef struct {
     int connfd;
-    struct timeval arrival_time; // <!<!<!<!<!<!<!<!<!<!<! ADDED THIS
-    // >>>>>>>>>> NOTE: WE'LL HAVE TO ADD FIELDS FOR INFO 
+    struct timeval arrival_time; 
 } RequestInfo;
 
 

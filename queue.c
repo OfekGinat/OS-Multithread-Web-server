@@ -361,7 +361,7 @@ void _drop_tail_push_back(RequestInfo request_info)
 void _drop_head_push_back(RequestInfo request_info)
 {
     mutex_lock(&queue_lock_m);
-    if (((queue_size + num_requests_in_handling) == MAX_REQUESTS_NUM)) {
+    if ((queue_size + num_requests_in_handling) == MAX_REQUESTS_NUM) {
         if (queue_size == 0) {
             Close(request_info.connfd);
             mutex_unlock(&queue_lock_m);

@@ -1,8 +1,8 @@
-#ifndef _QUEUE_H_
-#define _QUEUE_H_
+#ifndef __QUEUE_H__
+#define __QUEUE_H__
 
 //#include "segel.h"
-
+#include <sys/time.h>
 
 /** 
 *    RequestInfo -
@@ -11,6 +11,7 @@
 **/
 typedef struct {
     int connfd;
+    struct timeval arrival_time; // <!<!<!<!<!<!<!<!<!<!<! ADDED THIS
     // >>>>>>>>>> NOTE: WE'LL HAVE TO ADD FIELDS FOR INFO 
 } RequestInfo;
 
